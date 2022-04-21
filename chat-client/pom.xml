@@ -112,7 +112,7 @@
                         <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>ru.geekbrains.chatclient/ru.geekbrains.chatclient.HelloApplication</mainClass>
+                            <mainClass>ru.geekbrains.chatclient/ru.geekbrains.chatclient.Main</mainClass>
                         </configuration>
                     </execution>
                 </executions>
