@@ -90,6 +90,12 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.24</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -112,7 +118,7 @@
                         <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>ru.geekbrains.chatclient/ru.geekbrains.chatclient.HelloApplication</mainClass>
+                            <mainClass>ru.geekbrains.chatclient/ru.geekbrains.chatclient.Main</mainClass>
                         </configuration>
                     </execution>
                 </executions>
