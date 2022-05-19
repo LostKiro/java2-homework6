@@ -1,74 +1,76 @@
 package ru.geekbrains;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import ru.geekbrains.authentication.AuthenticationService;
+import ru.geekbrains.authentication.BaseAuthenticationService;
+import ru.geekbrains.handler.ClientHandler;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Server {
+    private ServerSocket serverSocket;
+    private AuthenticationService authenticationService;
+    private List<ClientHandler> clients;
 
-    public static void main(String[] args) {
+    public Server() {
         try {
-            ServerSocket serverSocket = new ServerSocket(8189);
+            this.clients = new ArrayList<>();
+            this.serverSocket = new ServerSocket(8189);
+            this.authenticationService = new BaseAuthenticationService();
             System.out.println("Сервер запущен. Ожидание подключения клиентов..");
-
-            Socket socket = serverSocket.accept();
-            DataInputStream in = new DataInputStream(socket.getInputStream());
-            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-
-
-            Thread trIn = new Thread(() -> {
-                System.out.println("Клиент подключился");
-                try {
-                    while (true) {
-                        if (!socket.isConnected()) {
-                            System.out.println("Клиент не подключился");
-                            break;
-                        }
-                        String inputMessage = in.readUTF();
-                        if (inputMessage.equals("/end")) {
-                            System.out.println("Клиент отключился");
-                            break;
-                        }
-                        System.out.println("Клиент сказал:" + inputMessage);
-                    }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-            Thread trOut = new Thread(() -> {
-                Scanner sc = new Scanner(System.in);
-                try {
-                    while (true) {
-                        if (!socket.isConnected()) {
-                            break;
-                        }
-                        String inputMessage = sc.nextLine();
-                        out.writeUTF(inputMessage);
-
-                        if (inputMessage.equals("/end")) {
-                            break;
-                        }
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-
-            trIn.start();
-            trOut.start();
-
-            try {
-                trIn.join();
-                trOut.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            System.out.println("--------------------");
+            while (true) {
+                Socket socket = serverSocket.accept();
+                System.out.println("Подключился новый клиент..");
+                ClientHandler c = new ClientHandler(this, socket);
+                subscribe(c);
             }
+
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            if (authenticationService != null) {
+                authenticationService.endAuthentication();
+            }
         }
     }
-}
+
+    public synchronized void subscribe(ClientHandler c) {
+        clients.add(c);
+    }
+
+    public synchronized void unsubscribe(ClientHandler c) {
+        clients.remove(c);
+    }
+
+    public synchronized void broadcastMessage(String message) {
+        for (ClientHandler c : clients) {
+            c.sendMessage(message);
+        }
+    }
+
+    public synchronized void privateMessage(String username, String message) {
+        ClientHandler c = clients.stream()
+                .filter(x -> x.getUsername().equals(username))
+                .findFirst()
+                .orElseThrow();
+
+                c.sendMessage(message);
+    }
+
+        public AuthenticationService getAuthenticationService() {
+            return authenticationService;
+        }
+
+        public synchronized boolean isUsernameBusy (String username){
+            for (ClientHandler c : clients) {
+                if (c.getUsername().equals(username)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
